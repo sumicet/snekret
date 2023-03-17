@@ -37,10 +37,39 @@ describe('Storage contract', function () {
             'ipfsHash should not be empty'
         );
     });
+
+    it('should not allow creating an article with empty privateKey', async function () {
+        const ipfsHash = 'QmXZLjBZ9YWC6UHAbGxhj6Ufik6o5hgc5U6udbU6vZAM2Q';
+        const owner = await provider.getSigner(0).getAddress();
+        const isPublic = false;
+
+        await expect(
+            storage.createArticle(
+                ipfsHash,
+                '0x0000000000000000000000000000000000000000000000000000000000000000',
+                owner,
+                isPublic
+            )
+        ).to.be.revertedWith('privateKey should not be empty');
+    });
+
+    it('should not allow creating an article with empty owner', async function () {
+        const ipfsHash = 'QmXZLjBZ9YWC6UHAbGxhj6Ufik6o5hgc5U6udbU6vZAM2Q';
+        const privateKey = ethers.utils.randomBytes(32);
+        const isPublic = false;
+
+        await expect(
+            storage.createArticle(
+                ipfsHash,
+                privateKey,
+                '0x0000000000000000000000000000000000000000',
+                isPublic
+            )
+        ).to.be.revertedWith('owner should not be empty');
+    });
 });
 
 describe('Article contract', function () {
-    let article: Article;
     let Article: Article__factory;
 
     beforeEach(async function () {
@@ -76,13 +105,59 @@ describe('Article contract', function () {
             Article.deploy(ipfsHash, privateKey, ethers.constants.AddressZero, isPublic)
         ).to.be.revertedWith('owner should not be empty');
     });
+});
 
-    // it('should allow adding an address to the whitelist', async function () {
-    //     const addressToAdd = await ethers.provider.getSigner(1).getAddress();
+describe('Article contract', function () {
+    let article: Article;
+    const ipfsHash = 'QmXZLjBZ9YWC6UHAbGxhj6Ufik6o5hgc5U6udbU6vZAM2Q';
+    const privateKey = ethers.utils.randomBytes(32);
 
-    //     await article.addToWhitelist(addressToAdd);
-    //     const isWhitelisted = await article.whitelist(addressToAdd);
+    beforeEach(async function () {
+        const Article = await ethers.getContractFactory('Article');
 
-    //     expect(isWhitelisted).to.equal(true);
-    // });
+        const owner = await provider.getSigner(0).getAddress();
+        const isPublic = false;
+
+        article = await Article.deploy(ipfsHash, privateKey, owner, isPublic);
+
+        await article.deployed();
+    });
+
+    it('should allow the owner to add an address to the whitelist', async function () {
+        const addressToAdd = await ethers.provider.getSigner(1).getAddress();
+
+        await article.addToWhitelist(addressToAdd);
+        const [ipfsHash, privateKey] = await article.getMetadata();
+
+        expect(ipfsHash).to.equal(ipfsHash);
+        expect(privateKey).to.equal(privateKey);
+    });
+
+    it('should not allow an address other than owner to add an address to the whitelist', async function () {
+        const addressToAdd = await ethers.provider.getSigner(1).getAddress();
+
+        await expect(article.connect(ethers.provider.getSigner(1)).addToWhitelist(addressToAdd)).to
+            .be.reverted;
+    });
+
+    it('should allow the owner to remove an address from the whitelist', async function () {
+        const addressToAdd = await ethers.provider.getSigner(1).getAddress();
+
+        await article.addToWhitelist(addressToAdd);
+        await article.removeFromWhitelist(addressToAdd);
+
+        await expect(
+            article.connect(ethers.provider.getSigner(1)).getMetadata()
+        ).to.be.revertedWith('Address not whitelisted');
+    });
+
+    it('should not allow an address other than owner to remove an address from the whitelist', async function () {
+        const addressToAdd = await ethers.provider.getSigner(1).getAddress();
+
+        await article.addToWhitelist(addressToAdd);
+
+        await expect(
+            article.connect(ethers.provider.getSigner(1)).removeFromWhitelist(addressToAdd)
+        ).to.be.reverted;
+    });
 });
