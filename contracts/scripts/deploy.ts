@@ -5,7 +5,7 @@ async function main() {
     const storage = await Storage.deploy();
     await storage.deployed();
 
-    console.log('Deployed contracts.');
+    console.log('Deployed contract @', storage.address);
 }
 
 // We recommend this pattern to be able to use async/await everywhere
