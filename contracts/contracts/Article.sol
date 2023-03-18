@@ -41,8 +41,8 @@ contract Article is ERC1155 {
     }
 
     function getMetadata() public view returns (string memory, bytes32) {
-        if (!isPublic) {
-            require(whitelist[msg.sender], "Address not whitelisted");
+        if (!isPublic && whitelist[msg.sender] != true) {
+            return (ipfsHash, bytes32(0));
         }
         return (ipfsHash, privateKey);
     }

@@ -1,6 +1,6 @@
 # Snekret smart contracts
 
-Deployed contract @ `0xDF43A5230140A4F3ab2d6401b32333BD1c0cAe4F` on Polygon Mumbai.
+Deployed contract @ `0x873A25Eee1eae5C7813B5598ba3ab721Ae3d3421` on Polygon Mumbai.
 
 ```shell
 npx hardhat typechain

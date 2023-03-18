@@ -146,9 +146,12 @@ describe('Article contract', function () {
         await article.addToWhitelist(addressToAdd);
         await article.removeFromWhitelist(addressToAdd);
 
-        await expect(
-            article.connect(ethers.provider.getSigner(1)).getMetadata()
-        ).to.be.revertedWith('Address not whitelisted');
+        const [ipfsHash, privateKey] = await article
+            .connect(ethers.provider.getSigner(1))
+            .getMetadata();
+
+        expect(privateKey).to.equal(ethers.constants.HashZero);
+        expect(ipfsHash).to.not.undefined;
     });
 
     it('should not allow an address other than owner to remove an address from the whitelist', async function () {
